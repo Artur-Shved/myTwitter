@@ -1,8 +1,10 @@
-package com.example.myTwitter;
+package com.example.myTwitter.controller;
 
 import com.example.myTwitter.domain.Message;
+import com.example.myTwitter.domain.User;
 import com.example.myTwitter.repos.MessageRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,31 +15,29 @@ import java.util.List;
 import java.util.Map;
 
 @Controller
-public class GreetingController {
+public class MainController {
 
     @Autowired
     MessageRepo messageRepo;
 
-    @GetMapping("/greeting")
-    public String greeting(
-            @RequestParam(name = "name", required = false, defaultValue = "World") String name,
-            Map<String, Object> model
-    ){
-        model.put("name", name);
+    @GetMapping("/")
+    public String greeting(Map<String, Object> model){
         return "greeting";
-
     }
 
-    @GetMapping
+    @GetMapping("/main")
     public String main(Map<String, Object> model){
         Iterable<Message> messages = messageRepo.findAll();
         model.put("messages", messages);
         return "main";
     }
 
-    @PostMapping
-    public String add(@RequestParam String text, @RequestParam String tag, Map<String, Object> model) {
-        Message message = new Message(text, tag);
+    @PostMapping("/main")
+    public String add(@AuthenticationPrincipal User user,
+            @RequestParam String text,
+            @RequestParam String tag,
+            Map<String, Object> model) {
+        Message message = new Message(text, tag, user);
 
         messageRepo.save(message);
 
@@ -49,7 +49,8 @@ public class GreetingController {
     }
 
     @PostMapping("/filter")
-    public String filter(@RequestParam String filter, Map<String, Object> model){
+    public String filter(@RequestParam String filter,
+                         Map<String, Object> model){
         Iterable<Message>messages;
         if(filter != null && !filter.isEmpty()) {
              messages = messageRepo.findByTag(filter);
